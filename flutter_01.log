@@ -1,0 +1,159 @@
+Flutter crash report; please file at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run
+
+## exception
+
+String: Exit code 1 from: /home/mfairhurst/dart/reader/android/gradlew -v:
+Downloading https://services.gradle.org/distributions/gradle-3.3-all.zip
+
+
+Exception in thread "main" javax.net.ssl.SSLException: java.security.ProviderException: java.security.InvalidKeyException: EC parameters error
+	at sun.security.ssl.Alerts.getSSLException(Alerts.java:208)
+	at sun.security.ssl.SSLSocketImpl.fatal(SSLSocketImpl.java:1914)
+	at sun.security.ssl.SSLSocketImpl.fatal(SSLSocketImpl.java:1872)
+	at sun.security.ssl.SSLSocketImpl.handleException(SSLSocketImpl.java:1855)
+	at sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:1376)
+	at sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:1353)
+	at sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:559)
+	at sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:185)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1348)
+	at sun.net.www.protocol.https.HttpsURLConnectionImpl.getInputStream(HttpsURLConnectionImpl.java:254)
+	at org.gradle.wrapper.Download.downloadInternal(Download.java:58)
+	at org.gradle.wrapper.Download.download(Download.java:44)
+	at org.gradle.wrapper.Install$1.call(Install.java:61)
+	at org.gradle.wrapper.Install$1.call(Install.java:48)
+	at org.gradle.wrapper.ExclusiveFileAccessManager.access(ExclusiveFileAccessManager.java:65)
+	at org.gradle.wrapper.Install.createDist(Install.java:48)
+	at org.gradle.wrapper.WrapperExecutor.execute(WrapperExecutor.java:128)
+	at org.gradle.wrapper.GradleWrapperMain.main(GradleWrapperMain.java:61)
+Caused by: java.security.ProviderException: java.security.InvalidKeyException: EC parameters error
+	at sun.security.pkcs11.P11Key$P11ECPublicKey.getEncodedInternal(P11Key.java:1024)
+	at sun.security.pkcs11.P11Key.equals(P11Key.java:158)
+	at java.util.ArrayList.indexOf(ArrayList.java:298)
+	at java.util.ArrayList.contains(ArrayList.java:281)
+	at sun.security.validator.PKIXValidator.engineValidate(PKIXValidator.java:239)
+	at sun.security.validator.Validator.validate(Validator.java:260)
+	at sun.security.ssl.X509TrustManagerImpl.validate(X509TrustManagerImpl.java:326)
+	at sun.security.ssl.X509TrustManagerImpl.checkTrusted(X509TrustManagerImpl.java:231)
+	at sun.security.ssl.X509TrustManagerImpl.checkServerTrusted(X509TrustManagerImpl.java:126)
+	at sun.security.ssl.ClientHandshaker.serverCertificate(ClientHandshaker.java:1459)
+	at sun.security.ssl.ClientHandshaker.processMessage(ClientHandshaker.java:213)
+	at sun.security.ssl.Handshaker.processLoop(Handshaker.java:961)
+	at sun.security.ssl.Handshaker.process_record(Handshaker.java:897)
+	at sun.security.ssl.SSLSocketImpl.readRecord(SSLSocketImpl.java:1033)
+	at sun.security.ssl.SSLSocketImpl.performInitialHandshake(SSLSocketImpl.java:1342)
+	at sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:1369)
+	... 13 more
+Caused by: java.security.InvalidKeyException: EC parameters error
+	at sun.security.ec.ECParameters.getAlgorithmParameters(ECParameters.java:284)
+	at sun.security.ec.ECPublicKeyImpl.<init>(ECPublicKeyImpl.java:59)
+	at sun.security.pkcs11.P11Key$P11ECPublicKey.getEncodedInternal(P11Key.java:1021)
+	... 28 more
+Caused by: java.security.NoSuchProviderException: no such provider: SunEC
+	at sun.security.jca.GetInstance.getService(GetInstance.java:83)
+	at sun.security.jca.GetInstance.getInstance(GetInstance.java:206)
+	at java.security.Security.getImpl(Security.java:697)
+	at java.security.AlgorithmParameters.getInstance(AlgorithmParameters.java:199)
+	at sun.security.ec.ECParameters.getAlgorithmParameters(ECParameters.java:279)
+	... 30 more
+
+```
+#0      runCheckedAsync (package:flutter_tools/src/base/process.dart:242)
+<asynchronous suspension>
+#1      _initializeGradle (package:flutter_tools/src/android/gradle.dart:169)
+<asynchronous suspension>
+#2      _ensureGradle (package:flutter_tools/src/android/gradle.dart:151)
+<asynchronous suspension>
+#3      _readGradleProject (package:flutter_tools/src/android/gradle.dart:86)
+<asynchronous suspension>
+#4      _gradleProject (package:flutter_tools/src/android/gradle.dart:79)
+<asynchronous suspension>
+#5      getGradleAppOut (package:flutter_tools/src/android/gradle.dart:73)
+<asynchronous suspension>
+#6      AndroidApk.fromCurrentDirectory (package:flutter_tools/src/application_package.dart:88)
+<asynchronous suspension>
+#7      getApplicationPackageForPlatform (package:flutter_tools/src/application_package.dart:267)
+<asynchronous suspension>
+#8      FlutterDevice.runHot (package:flutter_tools/src/resident_runner.dart:247)
+<asynchronous suspension>
+#9      HotRunner.run (package:flutter_tools/src/run_hot.dart:211)
+<asynchronous suspension>
+#10     RunCommand.runCommand (package:flutter_tools/src/commands/run.dart:348)
+<asynchronous suspension>
+#11     FlutterCommand.verifyThenRunCommand (package:flutter_tools/src/runner/flutter_command.dart:253)
+<asynchronous suspension>
+#12     FlutterCommand.run (package:flutter_tools/src/runner/flutter_command.dart:193)
+<asynchronous suspension>
+#13     CommandRunner.runCommand (package:args/command_runner.dart:194)
+<asynchronous suspension>
+#14     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:279)
+<asynchronous suspension>
+#15     CommandRunner.run.<anonymous closure> (package:args/command_runner.dart:109)
+#16     new Future.sync (dart:async/future.dart:222)
+#17     CommandRunner.run (package:args/command_runner.dart:109)
+#18     FlutterCommandRunner.run (package:flutter_tools/src/runner/flutter_command_runner.dart:162)
+#19     run.<anonymous closure> (package:flutter_tools/executable.dart:143)
+<asynchronous suspension>
+#20     AppContext._run (package:flutter_tools/src/base/context.dart:76)
+<asynchronous suspension>
+#21     AppContext.runInZone.<anonymous closure> (package:flutter_tools/src/base/context.dart:66)
+#22     _rootRun (dart:async/zone.dart:1120)
+#23     _CustomZone.run (dart:async/zone.dart:1001)
+#24     runZoned (dart:async/zone.dart:1467)
+#25     AppContext.runInZone (package:flutter_tools/src/base/context.dart:65)
+#26     run (package:flutter_tools/executable.dart:114)
+<asynchronous suspension>
+#27     main (package:flutter_tools/executable.dart:67)
+<asynchronous suspension>
+#28     main (file:///home/mfairhurst/dart/flutter/packages/flutter_tools/bin/flutter_tools.dart:16)
+#29     _startIsolate.<anonymous closure> (dart:isolate-patch/isolate_patch.dart:263)
+#30     _RawReceivePortImpl._handleMessage (dart:isolate-patch/isolate_patch.dart:151)
+```
+
+## flutter doctor
+
+```
+[✓] Flutter (on Linux, locale en_US.UTF-8, channel alpha)
+    • Flutter at /home/mfairhurst/dart/flutter
+    • Framework revision e8aa40eddd (4 weeks ago), 2017-10-17 15:42:40 -0700
+    • Engine revision 7c4142808c
+    • Tools Dart version 1.25.0-dev.11.0
+
+[✓] Android toolchain - develop for Android devices (Android SDK 25.0.3)
+    • Android SDK at /home/mfairhurst
+    • Platform android-25, build-tools 25.0.3
+    • ANDROID_HOME = /home/mfairhurst
+    • Java binary at: /usr/bin/java
+    • Java version OpenJDK Runtime Environment (IcedTea 2.6.11) (7u151-2.6.11-0ubuntu1.14.04.1)
+
+[✗] Android Studio (not installed)
+    • Android Studio not found; download from https://developer.android.com/studio/index.html
+      (or visit https://flutter.io/setup/#android-setup for detailed instructions).
+
+[-] IntelliJ IDEA Ultimate Edition (version 2016.2)
+    ✗ Flutter plugin not installed; this adds Flutter specific functionality.
+    • Dart plugin version 162.2485
+    • For information about installing plugins, see
+      https://flutter.io/intellij-setup/#installing-the-plugins
+    ✗ This install is older than the minimum recommended version of 2017.1.0.
+
+[-] IntelliJ IDEA Ultimate Edition (version 2017.2)
+    ✗ Flutter plugin not installed; this adds Flutter specific functionality.
+    • Dart plugin version 172.2791
+    • For information about installing plugins, see
+      https://flutter.io/intellij-setup/#installing-the-plugins
+
+[-] IntelliJ IDEA Ultimate Edition (version 2016.3)
+    ✗ Flutter plugin not installed; this adds Flutter specific functionality.
+    • Dart plugin version 163.8651
+    • For information about installing plugins, see
+      https://flutter.io/intellij-setup/#installing-the-plugins
+    ✗ This install is older than the minimum recommended version of 2017.1.0.
+
+[✓] Connected devices
+    • Android SDK built for x86 64 • emulator-5554 • android-x64 • Android 7.1.1 (API 25) (emulator)
+
+```
