@@ -7,7 +7,8 @@ import '../models/histogram.dart';
 import 'speed.dart';
 
 class MyReadPage extends StatefulWidget {
-  MyReadPage({Key key, List<String> sentences})
+  MyReadPage(
+      {Key key, List<String> sentences, this.previousHistograms = const []})
       : text = sentences[0].split(' '),
         nextSentences = sentences.sublist(1, sentences.length),
         super(key: key);
@@ -19,6 +20,7 @@ class MyReadPage extends StatefulWidget {
 
   final List<String> text;
   final List<String> nextSentences;
+  final List<Histogram> previousHistograms;
 
   @override
   _MyReadPageState createState() => new _MyReadPageState();
@@ -41,7 +43,8 @@ class _MyReadPageState extends State<MyReadPage> {
         builder: (_) => new MyHistogramPage(
             histogram: histogram,
             sentence: widget.text,
-            nextSentences: widget.nextSentences)));
+            nextSentences: widget.nextSentences,
+            previousHistograms: widget.previousHistograms)));
     reset();
   }
 

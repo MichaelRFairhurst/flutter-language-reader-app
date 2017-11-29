@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_charts/flutter_charts.dart';
 
@@ -5,10 +6,16 @@ import '../models/histogram.dart';
 import 'reader.dart';
 
 class MyHistogramPage extends StatefulWidget {
-  MyHistogramPage({Key key, this.histogram, this.sentence, this.nextSentences})
+  MyHistogramPage(
+      {Key key,
+      this.histogram,
+      this.sentence,
+      this.nextSentences,
+      this.previousHistograms})
       : super(key: key);
 
   final Histogram histogram;
+  final List<Histogram> previousHistograms;
   final List<String> sentence;
   final List<String> nextSentences;
 
@@ -17,6 +24,10 @@ class MyHistogramPage extends StatefulWidget {
 }
 
 class _MyHistogramPageState extends State<MyHistogramPage> {
+  final _lineChartOptions = new LineChartOptions()..hotspotOuterRadius = 4.0;
+  final _chartData = new ChartData()
+    ..dataRowsLegends = ['Speed', 'Progress', 'Word', 'Last Speeds'];
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -48,21 +59,17 @@ class _MyHistogramPageState extends State<MyHistogramPage> {
                 textAlign: TextAlign.center,
               ),
             ),
-            () {
-              final _lineChartOptions = new LineChartOptions();
-              final _chartData = new ChartData();
-              _chartData.dataRowsLegends = [];
-              _chartData.dataRows = [widget.histogram.dataRows];
-              _chartData.xLabels = widget.histogram.xLabels;
-              _chartData.assignDataRowsDefaultColors();
-              // Note: ChartOptions.useUserProvidedYLabels default is still used (false);
-              return new Expanded(
-                  child: new LineChart(
+            new Expanded(
+              child: new LineChart(
                 painter: new LineChartPainter(),
                 layouter: new LineChartLayouter(
-                    chartData: _chartData, chartOptions: _lineChartOptions),
-              ));
-            }(),
+                    chartData: _chartData
+                      ..dataRows = dataRows
+                      ..xLabels = widget.histogram.xLabels
+                      ..dataRowsColors = dataRowsColors,
+                    chartOptions: _lineChartOptions),
+              ),
+            ),
           ],
         ),
       ),
@@ -72,13 +79,28 @@ class _MyHistogramPageState extends State<MyHistogramPage> {
               onPressed: () {
                 Navigator.of(context).pushReplacement(
                     new MaterialPageRoute<Null>(
-                        builder: (_) =>
-                            new MyReadPage(sentences: widget.nextSentences)));
+                        builder: (_) => new MyReadPage(
+                            sentences: widget.nextSentences,
+                            previousHistograms:
+                                new List.from(widget.previousHistograms)
+                                  ..add(widget.histogram))));
               },
               child: const Icon(Icons.navigate_next),
             ),
     );
   }
+
+  List<List<double>> get dataRows => [
+        widget.histogram.speedByTime,
+        widget.histogram.progressByTime,
+        widget.histogram.wordsByTime,
+      ]..addAll(widget.previousHistograms.map((h) => h.speedByTime));
+
+  List<ui.Color> get dataRowsColors => [
+        Colors.blue, // speed
+        Colors.cyan, // progress
+        Colors.lime // word
+      ]..addAll(widget.previousHistograms.map((h) => Colors.blueGrey));
 
   int get seconds => widget.histogram.duration.inSeconds;
   int get words => widget.sentence.length;
