@@ -115,12 +115,6 @@ class _MyReadPageState extends State<MyReadPage> {
               ),
               new Expanded(
                 flex: 1,
-                child: new CustomPaint(
-                  painter: new SpeedPainter(dragamt),
-                ),
-              ),
-              new Expanded(
-                flex: 1,
                 child: new Text(
                   'drag to read',
                   style: Theme.of(context).textTheme.display1,
