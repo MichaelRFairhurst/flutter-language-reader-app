@@ -24,7 +24,11 @@ class MyHistogramPage extends StatefulWidget {
 }
 
 class _MyHistogramPageState extends State<MyHistogramPage> {
-  final _lineChartOptions = new LineChartOptions()..hotspotOuterRadius = 4.0;
+  final _lineChartOptions = new LineChartOptions()
+    ..hotspotOuterRadius = 5.0
+    ..hotspotOuterPaint = (new Paint()..color = Colors.blueGrey)
+    ..hotspotInnerRadius = 3.0
+    ..hotspotInnerPaint = (new Paint()..color = Colors.grey);
   final _chartData = new ChartData()
     ..dataRowsLegends = ['Speed', 'Progress', 'Word', 'Last Speeds'];
 
