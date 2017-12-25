@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'histogram.dart';
 import '../models/histogram.dart';
-import 'speed.dart';
 
 class MyReadPage extends StatefulWidget {
   MyReadPage(
@@ -27,17 +27,37 @@ class MyReadPage extends StatefulWidget {
 }
 
 class _MyReadPageState extends State<MyReadPage> {
+  /// Histogram for showing progress/speeds later
   Histogram histogram = new Histogram();
-  int _word = 0;
+
+  /// Ticker for rendering the fadein/out of the previous/next [_word]s.
+  Ticker ticker;
+
+  /// We have to store this so that we can navigate on a tick event (when we get
+  /// to the final [_word].
+  BuildContext context;
+
+  _MyReadPageState() {
+    ticker = new Ticker(_step);
+  }
+
+  /// Which word we are showing, including fractional [_progress].
+  double position = 0.0;
+
+  /// Which word we are using ([position] without the [_progress]).
+  int get _word => position.floor();
+
+  /// How long we've shown the current [_word]
+  double get _progress => position - _word;
+
+  /// How long until we show the next [_word]
+  double get _pending => 1 - _progress;
+
+  /// How quickly we're progressing, based on the amount dragged.
   double dragamt = 0.0;
-  double rollover = 1.0;
 
-  Function() delayed = () {};
-
-  Function() _incrementCounterOrLeave(BuildContext context) =>
-      _word == widget.text.length - 1 ? () => done(context) : increment;
-
-  void done(BuildContext context) {
+  /// Finalize the histogram, and show it in the page.
+  void done() {
     histogram.done();
     Navigator.of(context).pushReplacement(new MaterialPageRoute<Null>(
         builder: (_) => new MyHistogramPage(
@@ -45,56 +65,38 @@ class _MyReadPageState extends State<MyReadPage> {
             sentence: widget.text,
             nextSentences: widget.nextSentences,
             previousHistograms: widget.previousHistograms)));
-    reset();
+    ticker.stop();
+    position = widget.text.length.toDouble() - 1;
   }
 
-  void increment() => setState(() {
-        // This call to setState tells the Flutter framework that something has
-        // changed in this State, which causes it to rerun the build method below
-        // so that the display can reflect the updated values. If we changed
-        // _word without calling setState(), then the build method would not be
-        // called again, and so nothing would appear to happen.
-        histogram.report(new WordReadEvent(_word++));
-      });
-
-  void _handleDrag(DragUpdateDetails details, BuildContext context) {
-    dragamt += details.delta.dx;
-    _handleRolloverLoop(context);
-  }
-
-  void _handleRolloverLoop(BuildContext context) {
-    _handleRollover(context);
-    delayed = () => _handleRolloverLoop(context);
-    new Future.delayed(const Duration(milliseconds: 40)).then((_) {
-      delayed();
-    });
-  }
-
-  void _handleRollover(BuildContext context) {
-    rollover -= dragamt / 60000;
-    if (rollover < 0) {
-      rollover = 1.0;
-      _incrementCounterOrLeave(context)();
-    } else if (rollover > 1) {
-      rollover = 0.0;
-      if (_word > 0) {
-        setState(() => _word--);
-        return;
+  /// Called by [ticker] to adjust the [position] based on [dragamt] and
+  /// [duration] since last tick.
+  void _step(Duration duration) {
+    setState(() {
+      final lastword = _word;
+      position += dragamt / 5000000 * duration.inMilliseconds;
+      if (_word == widget.text.length) {
+        done();
+      } else if (position < 0) {
+        position = 0.0;
+      } else if (lastword != _word) {
+        histogram.report(new WordReadEvent(_word));
       }
-    }
-    setState(() {}); // rerender
+    });
   }
 
   void reset() {
     dragamt = 0.0;
-    delayed = () {};
+    ticker.stop();
   }
 
   @override
   Widget build(BuildContext context) {
+    this.context = context;
     return new GestureDetector(
+      onHorizontalDragStart: (DragStartDetails details) => ticker.start(),
       onHorizontalDragUpdate: (DragUpdateDetails details) =>
-          _handleDrag(details, context),
+          dragamt += details.delta.dx,
       onHorizontalDragEnd: (_) => reset(),
       child: new Scaffold(
         appBar: new AppBar(
@@ -128,6 +130,8 @@ class _MyReadPageState extends State<MyReadPage> {
     );
   }
 
+  /// The words are not easy to declaratively generate, due to stacked blurs.
+  /// Do some math to make the stacked blurs add up to the right blur.
   List<Widget> words() {
     final result = [];
 
@@ -144,7 +148,7 @@ class _MyReadPageState extends State<MyReadPage> {
                 new Text(
                   widget.text[_word + 1],
                   style: Theme.of(context).textTheme.headline,
-                  textScaleFactor: (rollover + 1 / 2.5) * 2.5,
+                  textScaleFactor: (_pending + 1 / 2.5) * 2.5,
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -155,18 +159,18 @@ class _MyReadPageState extends State<MyReadPage> {
     }
 
     // previous blur
-    var finalBlur = (rollover + 0.1) * 15;
+    var finalBlur = (_pending + 0.1) * 15;
 
     // Previous word
     if (_word > 0) {
       // Blurs are inverse, annoyingly. Blur the next word by less than the
       // amount this word will be blurred.
-      final nextBlur = ((1 - rollover) + 0.5) * 1.5;
+      final nextBlur = (_progress + 0.5) * 1.5;
       final currentBlur = finalBlur - nextBlur;
       finalBlur = nextBlur;
       result.add(
         new Positioned.fill(
-          top: (1 - rollover) * 75,
+          top: _progress * 75,
           bottom: 0.0,
           child: new BackdropFilter(
             filter:
@@ -178,7 +182,7 @@ class _MyReadPageState extends State<MyReadPage> {
                   new Text(
                     widget.text[_word - 1],
                     style: Theme.of(context).textTheme.headline,
-                    textScaleFactor: rollover / 2,
+                    textScaleFactor: _pending / 2,
                     textAlign: TextAlign.center,
                   ),
                 ],
