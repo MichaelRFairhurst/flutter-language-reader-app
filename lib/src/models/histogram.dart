@@ -1,41 +1,32 @@
 import 'dart:collection';
 
 class Histogram {
-  DateTime get startTime => _wordReadEvents.first.timeRead;
-  final _wordReadEvents = <WordReadEvent>[];
+  DateTime get startTime => wordReadEvents.first.timeRead;
+  final List<WordReadEvent> wordReadEvents;
+  final DateTime endTime;
 
-  void report(WordReadEvent readEvent) {
-    assert(_endTime == null);
-    _wordReadEvents.add(readEvent);
-  }
+  Histogram({this.wordReadEvents = const <WordReadEvent>[], this.endTime});
 
-  void done() {
-    assert(_endTime == null);
-    _endTime = new DateTime.now();
-  }
-
-  DateTime _endTime;
-
-  Duration get duration => _endTime.difference(startTime);
+  Duration get duration => endTime.difference(startTime);
 
   List<double> get wordsByTime => new _HistogramTimeIterator(this).map((time) {
-        final lastEventIndex = _wordReadEvents
+        final lastEventIndex = wordReadEvents
                 .takeWhile((ev) => !ev.timeRead.isAfter(time))
                 .toList()
                 .length -
             1;
         final wordsAtEvent =
-            lastEventIndex == -1 ? 0 : _wordReadEvents[lastEventIndex].index;
+            lastEventIndex == -1 ? 0 : wordReadEvents[lastEventIndex].index;
 
         return wordsAtEvent.toDouble();
       }).toList();
 
   List<double> get progressByTime => new _HistogramTimeIterator(this)
-      .map((time) => _wordReadEvents.reversed
+      .map((time) => wordReadEvents.reversed
           .takeWhile((ev) => ev.timeRead.isAfter(time))
           .map((ev) => ev.index)
           .fold(
-              _wordReadEvents
+              wordReadEvents
                       .lastWhere((ev) => !ev.timeRead.isAfter(time),
                           orElse: () => null)
                       ?.index ??
@@ -46,7 +37,7 @@ class Histogram {
 
   List<double> get speedByTime => new _HistogramTimeIterator(this).map((time) {
         final events =
-            _wordReadEvents.takeWhile((ev) => !ev.timeRead.isAfter(time));
+            wordReadEvents.takeWhile((ev) => !ev.timeRead.isAfter(time));
         return events.isEmpty
             ? 0.0
             : events.last.index /
@@ -87,7 +78,7 @@ class _HistogramTimeIterator extends IterableMixin<DateTime>
 
   _HistogramTimeIterator.exactInterval(Histogram histogram, this.interval)
       : current = histogram.startTime,
-        _end = histogram._endTime;
+        _end = histogram.endTime;
 
   DateTime current;
 

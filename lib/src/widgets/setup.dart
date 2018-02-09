@@ -1,39 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 
-import 'reader.dart';
+import '../navigation.dart';
+import '../models/reader_state.dart';
+import '../store/actions.dart';
 
-class MySetupPage extends StatefulWidget {
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  @override
-  _MySetupPageState createState() => new _MySetupPageState();
-}
-
-class _MySetupPageState extends State<MySetupPage> {
-  String _text = '';
-  void _action(String text) {
-    setState(() {
-      _text = text;
-    });
-  }
-
-  final _controller = new TextEditingController();
+class MySetupPage extends StatelessWidget {
+  final editingController = new TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Enter text to read'),
@@ -54,32 +30,13 @@ class _MySetupPageState extends State<MySetupPage> {
               new Expanded(
                 child: new Container(
                   padding: new EdgeInsets.all(4.0),
-                  child: new TextField(
-                    maxLines: 10000, // null has a bug
-                    controller: _controller,
-                    decoration: new InputDecoration(
-                      hintText: 'Enter some text for paced reading',
-                    ),
-                    onChanged: _action,
-                  ),
+                  child: _textBox,
                 ),
               ),
               new Row(
                 children: [
                   new Expanded(
-                    child: new RaisedButton(
-                      onPressed: sentences.isEmpty
-                          ? null
-                          : () {
-                              Navigator.of(context).push(
-                                    new MaterialPageRoute<Null>(
-                                      builder: (_) =>
-                                          new MyReadPage(sentences: sentences),
-                                    ),
-                                  );
-                            },
-                      child: new Text('START'),
-                    ),
+                    child: _startButton,
                   ),
                 ],
               )
@@ -90,8 +47,29 @@ class _MySetupPageState extends State<MySetupPage> {
     );
   }
 
-  List<String> get sentences => new RegExp(r'[^\.?!\s][^\.?!]*([\.?!]+|$)')
-      .allMatches(_text)
-      .map((m) => m.group(0))
-      .toList();
+  Widget get _textBox => new StoreBuilder<ReaderState>(
+        builder: (context, store) => new TextField(
+              maxLines: 10000, // null has a bug
+              controller: editingController,
+              decoration: new InputDecoration(
+                hintText: 'Enter some text for paced reading',
+              ),
+              onChanged: (s) => store.dispatch(new SetTextAction(s)),
+            ),
+      );
+
+  Widget get _startButton => new StoreConnector<ReaderState, List<String>>(
+        converter: getSentences,
+        builder: (context, sentences) => new StoreBuilder<ReaderState>(
+              builder: (context, store) => new RaisedButton(
+                    onPressed: sentences.isEmpty
+                        ? null
+                        : () {
+                            store.dispatch(SimpleAction.nextSentence);
+                            Navigator.of(context).pushNamed(readerRoute);
+                          },
+                    child: new Text('START'),
+                  ),
+            ),
+      );
 }

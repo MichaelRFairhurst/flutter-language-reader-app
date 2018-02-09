@@ -1,29 +1,14 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_charts/flutter_charts.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 
-import '../models/histogram.dart';
-import 'reader.dart';
+import '../models/reader_state.dart';
+import '../store/actions.dart';
 
-class MyHistogramPage extends StatefulWidget {
-  MyHistogramPage(
-      {Key key,
-      this.histogram,
-      this.sentence,
-      this.nextSentences,
-      this.previousHistograms})
-      : super(key: key);
+class Histogram extends StatelessWidget {
+  Histogram({Key key}) : super(key: key);
 
-  final Histogram histogram;
-  final List<Histogram> previousHistograms;
-  final List<String> sentence;
-  final List<String> nextSentences;
-
-  @override
-  _MyHistogramPageState createState() => new _MyHistogramPageState();
-}
-
-class _MyHistogramPageState extends State<MyHistogramPage> {
   final _lineChartOptions = new LineChartOptions()
     ..hotspotOuterRadius = 5.0
     ..hotspotOuterPaint = (new Paint()..color = Colors.blueGrey)
@@ -45,68 +30,72 @@ class _MyHistogramPageState extends State<MyHistogramPage> {
           children: <Widget>[
             new Padding(
               padding: new EdgeInsets.symmetric(vertical: 15.0),
-              child: new Text(
-                widget.nextSentences.isEmpty
-                    ? 'You completed the reading!'
-                    : 'Sentence completed!',
-                style: Theme.of(context).textTheme.display1,
-                textAlign: TextAlign.center,
+              child: new StoreConnector<ReaderState, bool>(
+                converter: isDone,
+                builder: (context, done) => new Text(
+                      done
+                          ? 'You completed the reading!'
+                          : 'Sentence completed!',
+                      style: Theme.of(context).textTheme.display1,
+                      textAlign: TextAlign.center,
+                    ),
               ),
             ),
             new Padding(
               padding: new EdgeInsets.only(bottom: 10.0),
-              child: new Text(
-                'Time: $seconds\n'
-                    'Words: $words\n'
-                    'Wpm: $rate',
-                style: Theme.of(context).textTheme.headline,
-                textAlign: TextAlign.center,
+              child: new StoreConnector<ReaderState, SummaryStats>(
+                converter: summaryStats,
+                builder: (context, stats) => new Text(
+                      'Time: ${stats.seconds}\n'
+                          'Words: ${stats.words}\n'
+                          'Wpm: ${getRate(stats.words, stats.seconds)}',
+                      style: Theme.of(context).textTheme.headline,
+                      textAlign: TextAlign.center,
+                    ),
               ),
             ),
             new Expanded(
-              child: new LineChart(
-                painter: new LineChartPainter(),
-                layouter: new LineChartLayouter(
-                    chartData: _chartData
-                      ..dataRows = dataRows
-                      ..xLabels = widget.histogram.xLabels
-                      ..dataRowsColors = dataRowsColors,
-                    chartOptions: _lineChartOptions),
+              child: new StoreConnector<ReaderState, SummaryGraphData>(
+                converter: summaryGraphData,
+                builder: (context, graphData) => new LineChart(
+                      painter: new LineChartPainter(),
+                      layouter: new LineChartLayouter(
+                          chartData: _chartData
+                            ..dataRows = graphData.dataRows
+                            ..xLabels = graphData.xLabels
+                            ..dataRowsColors = getDataRowsColors(
+                                graphData.priorHistogramsCount),
+                          chartOptions: _lineChartOptions),
+                    ),
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: widget.nextSentences.isEmpty
-          ? null
-          : new FloatingActionButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                    new MaterialPageRoute<Null>(
-                        builder: (_) => new MyReadPage(
-                            sentences: widget.nextSentences,
-                            previousHistograms:
-                                new List.from(widget.previousHistograms)
-                                  ..add(widget.histogram))));
-              },
-              child: const Icon(Icons.navigate_next),
-            ),
+      floatingActionButton: new StoreConnector<ReaderState, bool>(
+        converter: isDone,
+        builder: (context, done) => done
+            ? new Container()
+            : new StoreBuilder<ReaderState>(
+                builder: (context, store) => new FloatingActionButton(
+                      onPressed: () {
+                        store.dispatch(SimpleAction.nextSentence);
+                        Navigator.of(context).pushReplacementNamed("read");
+                      },
+                      child: const Icon(Icons.navigate_next),
+                    ),
+              ),
+      ),
     );
   }
 
-  List<List<double>> get dataRows => [
-        widget.histogram.speedByTime,
-        widget.histogram.progressByTime,
-        widget.histogram.wordsByTime,
-      ]..addAll(widget.previousHistograms.map((h) => h.speedByTime));
+  int getRate(int words, int seconds) => (words / seconds * 60).round();
 
-  List<ui.Color> get dataRowsColors => [
+  List<ui.Color> getDataRowsColors(int priorHistogramsCount) => [
         Colors.blue, // speed
         Colors.cyan, // progress
         Colors.lime // word
-      ]..addAll(widget.previousHistograms.map((h) => Colors.blueGrey));
-
-  int get seconds => widget.histogram.duration.inSeconds;
-  int get words => widget.sentence.length;
-  int get rate => (words / seconds * 60).round();
+        // one blueGrey for each prior histogram
+      ]..addAll(
+          new List.generate(priorHistogramsCount, (_) => Colors.blueGrey));
 }
